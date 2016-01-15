@@ -716,6 +716,7 @@ void confirm_user (GtkButton *btn, gpointer data) {
 }
 void users_changed (GtkTreeView *tv, gpointer data) {
   GtkTreePath *path =NULL;
+  GtkWidget *grp_tv = NULL;
   GtkTreeIter iter;
   GtkTreeModel *model;
   GtkTreeModel *grp= NULL;
@@ -730,9 +731,16 @@ void users_changed (GtkTreeView *tv, gpointer data) {
   gtk_tree_model_get(model,&iter, UID_COL, &id, -1); 
 
   grp = g_object_get_data (G_OBJECT(data), "groups");
+  grp_tv = g_object_get_data (G_OBJECT(data), "groups-tv");
 
-  if (id != 0) 
+  if (id != 0) {
     update_groups_model (grp, _find_by_id(id));
+      gtk_widget_set_sensitive (GTK_WIDGET (grp_tv), TRUE);
+  }
+  else {
+    gtk_widget_set_sensitive (GTK_WIDGET (grp_tv), FALSE);
+
+  }
 }
 
 void delete_user (GtkWidget *btn, gpointer data)
@@ -806,6 +814,7 @@ int main (int argc, char *argv[])
 
   g_object_set_data (G_OBJECT (users_tv), "groups", (gpointer)(gmodel));
   g_object_set_data (G_OBJECT (users_tv), "users", (gpointer)(umodel));
+  g_object_set_data (G_OBJECT (users_tv), "groups-tv", (gpointer)(groups_tv));
 
   g_signal_connect(users_add_btn, "clicked", G_CALLBACK(add_new_user), umodel);
   g_signal_connect(users_confirm_btn, "clicked", G_CALLBACK(confirm_user), users_tv);
