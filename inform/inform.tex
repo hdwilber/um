@@ -1,5 +1,6 @@
 \documentclass[letterpaper,10pt]{article}
-\usepackage[utf8]{inputenc}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage[utf8x]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage[spanish]{babel}
 \usepackage{tabularx}
@@ -311,5 +312,179 @@ la plataforma online github. El trabajo fue desarrollado cooperativamente usando
 \subsubsection{Gnu make}
 
 \section{Metodología}
+Para el desarrollo del software, se ha seguido la siguiente metodología:
+\subsection{Recopilación de información de bibliotecas disponibles}
+Se ha hecho la revisión de las bibliotecas para desarrollo de usuarios y grupos existentes,
+en el cual se llegó a considerar si el programa se realizaría en modo texto o en un modo gráfico.
+
+Se ha escogido el modo gráfico, utilizando Gtk+, debido a gusto personal nuestro y conocimientos previos.
+
+Las bibliotecas a ser utilizadas fueron descritas previamente en la sección Marco Teórico.
+
+\subsection{Estructuración del programa}
+El programa fue escrito de manera que se evite en lo posible de ocultar las variables innecesarias
+en el ámbito globar. Es decir, las únicas variables globales que se definieron son: lista de usuarios,
+lista de grupos y lista de shells.
+El resto de variables son constantes o tipos de datos de estructura, como ser identificación de columnas en las GtkTreeView
+de usuarios y grupos, definición de UsersItem/GruopsItem.
+
+Se mantiene un estilo de diseño de Modelo, Vista y Controlador (MVC) para la representación de los datos
+con las facilidades que brinda el entorno de desarrollo de Gtk+.
+
+\subsubsection{Definición de tipos de datos y estructuras}
+Los usuarios son representados mediante una lista de doble enlace definida en Glib, al cual se añade como 
+dato una estructura \_UsersItem previa definición de la estructura como un tipo de dato UsersItem.
+
+\begin{verbatim}
+
+Glist *users = NULL;
+typedef struct _UsersItem UsersItem; //Definición del tipo de dato
+struct _UsersItem { // Definición de la estructura
+  uid_t uid; //Identificador del usuario. Si es nuevo se establece a 0 
+  gid_t gid; //Identificador del grupo principal para el usuario
+  char *name; //Nombre de usuario  o login
+  char *fullname; //Nombre completo del usuario, primer parámetro de formato gecos
+  char *shell; //Shell
+  char * home; //Directorio de trabajo 
+  gboolean is_new; //Variable para poder diferenciar los nuevos usuarios creados 
+  gid_t *groups; //Lista de los id de grupos auxiliares a los que pertenece
+  int n_groups; //Cantidad de grupos de la lista de grupos auxiliares
+};
+
+\end{verbatim}
+El procedimiento con los grupos es similar con el tipo de dato GroupsItem.
+
+Se añade además, las constantes para identificación de las columnas a ser mostradas, como ser:
+\begin{verbatim}
+
+enum {
+  /*Identificación par la columna de ID*/
+  UID_COL,
+  /*Identificación para la columna de nombre o login*/
+  UNAME_COL,
+  /*Identificación para el nombre completo\*/
+  UFULLNAME_COL,
+  /*Columna de shell*/
+  USHELL_COL,
+  /*Columna de entorno de trabajo $home*/
+  UHOMEPATH_COL,
+  /*Columna de nuevo usuario*/
+  UISNEW_COL,
+  UN_COLS
+};
+
+\end{verbatim}
+
+De la misma manera que con usuarios fueron definidas las columnas para los grupos.
+
+
+
+\subsection{Funciones de segundo plano}
+Después de la definición de las variables y estructuras, se han definido las funciones 
+para rellenar éstos.
+Las funciones realizan un lectura de los archivos \emph{/etc/passwd} y \emph{/etc/groups},
+para usuarios y grupos, respectivamente, y llenar con ésta información, las estructuras
+de datos definidas.
+
+Las funciones \_populate\_users() y \_populate\_groups() realizan lo anteriormente descrito.
+
+\begin{verbatim}
+void _populate_users() {
+  UsersItem *u;
+  struct passwd *usr = NULL;
+  /*Abre el archivo por defecto para la lectura de los usuarios.*/
+  setpwent();
+  usr = getpwent();
+  while (usr != NULL) {
+    u = NULL;
+    u = (UsersItem *)(malloc (sizeof(UsersItem)));
+    if (u != NULL) {
+      if (usr->pw_uid >= 1000 && usr->pw_uid < 60000) {
+        u->uid = usr->pw_uid;
+        u->gid = usr->pw_gid;
+        u->name = strdup(usr->pw_name);
+        /*u->fullname = strdup(usr->pw_gecos);*/
+        _parse_gecos(u, usr->pw_gecos);
+        u->home= strdup (usr->pw_dir);
+        u->shell = strdup (usr->pw_shell);
+        u->is_new = FALSE;
+
+        users = g_list_append (users, u);
+        u->n_groups = 1;
+        u->groups = malloc (sizeof(gid_t));
+        
+        /*Obtiene la lista de grupos auxiliares al que pertenec el usuario actual a ser leido
+         * La primera vez, getgrouplist devuelve en el puntero de entero de entrada
+         * en este caso n->groups la cantidad de grupos que realmente tiene el usuario
+         * Para lo cual, una vez obtenido la cantidad total de grupos, se realiza una
+         * segunda llamada con la memoria reservada para la cantidad total.
+         */
+        if (getgrouplist (u->name, u->gid, u->groups, &u->n_groups)) {
+          g_free(u->groups);
+          u->groups = malloc (u->n_groups * sizeof(gid_t));
+          getgrouplist (u->name, u->gid, u->groups, &u->n_groups);
+          g_print ("Group: %i\n", u->groups[1]);
+        }
+      }
+    }
+    usr = getpwent();
+  }
+  endpwent();
+}
+\end{verbatim}
+La función setpwent() realiza la apertura y preparación del archivo \emph{/etc/passwd} 
+para empezar a obtener la información de los usuarios. Después, se hace uso de la 
+función getpwend() para obtener el primer uusario de la lista, seguidamente otra vez 
+la función getpwent() para obtener el siguiente, hasta terminar. Una vez que se concluya
+la obtención de los usuarios del archivo, se llama a la función getpwent() para que 
+cierre archivo y libere los recursos de memoria que haya solicitado.
+
+Para obtener la lista de grupos auxiliares, se llama a la función getgrouplist() que
+devuelve en un espacio de memoria previamente reservado la información de los grupos a los
+cuales pertenece el usuario.
+Es importante aclarar que se debe asignar como parámetro, en la llamada a la función, el 
+tamaño de memoria reservada para obtener los identificadores de grupos.
+Posterior a la llamada, éste retorna en la misma variable la cantidad de grupos al que 
+pertenece el usuario; motivo por el cual se realiza una liberación de los recursos
+previos y se solicita una memoria con el tamaño requerido en función a la cantidad
+de grupos devuelto.
+
+De la misma manera que con usuarios, se obtiene la información para los grupos. 
+Las funciones análogas para este caso son: setgrent(),getgrent() y endgrent().
+
+Hay unas funciones auxiliares que se escribieron para facilitar el uso de las estructuras,
+como la siguiente que muestra la información de un UsersItem en la salida estándar:
+\begin{verbatim}
+static void user_item_to_string (UsersItem *u) {
+  g_print ("Id: %i, Name: %s, Home: %s, Shell: %s\n", u->uid, u->name, u->home, u->shell);
+}
+\end{verbatim}
+La función anterior es por motivos nétamente de depuración.
+
+Otra funciones son:
+\begin{verbatim}
+UsersItem * _find_by_id (uid_t id);
+gboolean check_group(UsersItem *u, gid_t gid);
+\end{verbatim}
+
+
+Una vez que tanto las listas de grupos como de usuarios han sido obtenidos, 
+se procede con el modelamiento de la información para la presentación al usuario.
+
+\subsection{Modelo de datos para presentación}
+Una vez que se ha definido y cargado la información para los usuarios y los grupos,
+se procede a modelar la vista al usuario.
+
+Gtk+ presenta unos objetos para trabajar el modelado que se adecúe al 
+componente de visualización, uno de ellos es GtkListStore:
+
+\begin{verbatim}
+
+GObject
+ |---GtkListStore
+
+\end{verbatim}
 
 \end{document}
+
+

@@ -14,17 +14,30 @@
 
 
 #define SHELLS_FILE_PATH "/etc/shells"
-GList *users = NULL;
+
+/*Lista de usuarios con datos tipo UsersItem*/
+GList *users = NULL; 
+
+/*Lista de shells a leerse del archivo /etc/shells*/
 GList *shells = NULL;
+
+/*Lista de grupos de datos tipo GruopsItem*/
 GList *groups = NULL;
+
 gint next_uid = 0;
 
 enum {
+  /*Identificación par la columna de ID*/
   UID_COL,
+  /*Identificación para la columna de nombre o login*/
   UNAME_COL,
+  /*Identificación para el nombre completo\*/
   UFULLNAME_COL,
+  /*Columna de shell*/
   USHELL_COL,
+  /*Columna de entorno de trabajo $home*/
   UHOMEPATH_COL,
+  /*Columna de nuevo usuario*/
   UISNEW_COL,
   UN_COLS
 };
@@ -37,31 +50,31 @@ enum {
   GN_COLS
 };
 
-typedef struct _UsersItem UsersItem;
-struct _UsersItem {
-  uid_t uid;
-  gid_t gid;
-  char *name;
-  char *fullname;
-  char *shell;
-  char * home;
-  gboolean is_new;
-  gid_t *groups;
-  int n_groups;
+typedef struct _UsersItem UsersItem; //Definición del tipo de dato
+struct _UsersItem {     // Definición de la estructura
+  uid_t uid;            //Identificador del usuario. Si es nuevo se establece a 0 
+  gid_t gid;            //Identificador del grupo principal para el usuario
+  char *name;           //Nombre de usuario  o login
+  char *fullname;       //Nombre completo del usuario, primer parámetro de formato gecos
+  char *shell;          //Shell
+  char * home;          //Directorio de trabajo 
+  gboolean is_new;      //Variable para poder diferenciar los nuevos usuarios creados 
+  gid_t *groups;        //Lista de los id de grupos auxiliares a los que pertenece
+  int n_groups;         //Cantidad de grupos de la lista de grupos auxiliares
 };
 
+
 typedef struct _GroupsItem GroupsItem;
-struct _GroupsItem {
-  gid_t gid;
-  gchar * name;
-  struct group *grp;
-  gboolean not_new;
-  gboolean in_user;
+struct _GroupsItem {    
+  gid_t gid;            //Identificador de grupo
+  gchar * name;         //Nombre del grupo
+  struct group *grp;    //LInk a la estructura propia del grupo
+  gboolean not_new;     //Auxiliar para diferenciar si el grupo es nuevo
+  gboolean in_user;     // Auxiliar para establecer si el usuario seleccionado pertenece a este grupo.
 };
 
 static void user_item_to_string (UsersItem *u) {
   g_print ("Id: %i, Name: %s, Home: %s, Shell: %s\n", u->uid, u->name, u->home, u->shell);
-
 }
 _parse_gecos (UsersItem *u, char *data) {
   char delimiters[] = ",";
@@ -74,6 +87,9 @@ _parse_gecos (UsersItem *u, char *data) {
   u->fullname = token;
 }
 
+/* 
+ * Realiza una búsqueda del usuario dentro las listas de usuarios con el identificador como parámetro
+ */
 UsersItem * _find_by_id (uid_t id) {
   GList *o_users = users;
   UsersItem *u=NULL;
@@ -90,6 +106,7 @@ UsersItem * _find_by_id (uid_t id) {
   return u;
 }
 
+/*Función de llamada ante un evento de cerrar ventana*/
 static gboolean
 on_delete_event (GtkWidget *widget, GdkEvent  *event, gpointer   data) {
   g_print ("Going out...\n");
@@ -97,10 +114,13 @@ on_delete_event (GtkWidget *widget, GdkEvent  *event, gpointer   data) {
   return TRUE;
 }
 
+/*Función para llenar la variable groups con información de los grupos existentes en el sistema*/
 void _populate_groups () {
   GroupsItem *g = NULL;
   struct group *grp =NULL;
-  setgrent();
+  /*Realiza la apertura del archivo por defecto a ser leído*/
+  setgrent();         
+  /*Obtiene el primer grupo de la lista para continuar con el control y verificación del resto*/
   grp = getgrent();
   while (grp != NULL) {
     g = NULL;
@@ -117,18 +137,19 @@ void _populate_groups () {
     }
     grp=getgrent();
   }
+  /*Cierra el archivo de lectura abierto /etc/groups*/
   endgrent();
-
 }
 
 
 /**
- * Create a list with users insido GList *users variable
- * Using default password file.
+ * Crea la lista de usuarios a partir del archivo por defecto
+ * /etc/passwd
  */
 void _populate_users() {
   UsersItem *u;
   struct passwd *usr = NULL;
+  /*Abre el archivo por defecto para la lectura de los usuarios.*/
   setpwent();
   usr = getpwent();
   while (usr != NULL) {
@@ -149,6 +170,12 @@ void _populate_users() {
         u->n_groups = 1;
         u->groups = malloc (sizeof(gid_t));
         
+        /*Obtiene la lista de grupos auxiliares al que pertenec el usuario actual a ser leido
+         * La primera vez, getgrouplist devuelve en el puntero de entero de entrada
+         * en este caso n->groups la cantidad de grupos que realmente tiene el usuario
+         * Para lo cual, una vez obtenido la cantidad total de grupos, se realiza una
+         * segunda llamada con la memoria reservada para la cantidad total.
+         */
         if (getgrouplist (u->name, u->gid, u->groups, &u->n_groups)) {
           g_free(u->groups);
           u->groups = malloc (u->n_groups * sizeof(gid_t));
@@ -164,6 +191,9 @@ void _populate_users() {
 
 }
 
+/* Realiza la verificación de un usuario dentro de un grupo con gid
+ * Se debe cambiar a verificar dentro la lista del usuario
+ */
 static gboolean check_group(UsersItem *u, gid_t gid)
 {
   int i = 0;
@@ -175,9 +205,15 @@ static gboolean check_group(UsersItem *u, gid_t gid)
   return FALSE;
 }
 
+/* 
+ * Se realiza una actualización de los grupos con el usuario seleccionado
+ */
 static void update_groups_model (GtkTreeModel *model, UsersItem *u) {
   GtkTreePath *path;
   GtkTreeIter iter;
+
+  /* Se obtiene el origen del modelo para ir recorriendo y estableciendo su pertenencia
+   */
   gtk_tree_model_get_iter_from_string (model, &iter, "0");
   path = gtk_tree_model_get_path (model, &iter);
   
@@ -201,10 +237,10 @@ static void update_groups_model (GtkTreeModel *model, UsersItem *u) {
 
   g_print ("Se ha cambiado lo gruspo \n");
   /*g_free(path);*/
-  
-
 }
 
+/* Crea el modelo de datos para GtkTreeView para la vista de los grupos
+ */
 static GtkTreeModel *create_groups_model () {
   GtkListStore *model;
   GtkTreeIter iter;
@@ -215,8 +251,10 @@ static GtkTreeModel *create_groups_model () {
       G_TYPE_BOOLEAN,
       G_TYPE_BOOLEAN
       );
+  /*Se crea y llena la lista de grupos como variable global*/
   _populate_groups();
   GList *o_groups = groups;
+  /*La lista de grupos es recorrida una a una para llenar al modelo de datos*/
   while(groups != NULL) {
     GroupsItem *grp = groups->data;
     gtk_list_store_append(model, &iter);
