@@ -4,13 +4,14 @@
 \usepackage[T1]{fontenc}
 \usepackage[spanish]{babel}
 \usepackage{tabularx}
+\usepackage{graphicx}
 
 \newcommand{\swname}{Miau}
 \newcommand{\swsub}{Manejadador gráfico de usuarios Linux}
 
 \title{\swname \\ \swsub}
 \date{\today}
-\author{Israel Lozano, Wilber Hinojosa \and Wilson Kassia} 
+\author{Israel Lozano \and Wilber Hinojosa \and Wilson Kassia} 
 
 \begin{document}
 
@@ -110,6 +111,7 @@ Los UID que se les asigna están en los rangos definidos generalmente en el arch
 en Debian.
 
 \subsection{Administración de los usuarios}
+\label{sse:usersadmin}
 Los sistemas Linux presentan herramientas que permiten realizar la administración de los usuarios y grupos.
 Básicamente, trabajan sobre los archivos implicados en la administración de usuarios.
 \subsubsection{Archivos implicados}
@@ -467,7 +469,6 @@ UsersItem * _find_by_id (uid_t id);
 gboolean check_group(UsersItem *u, gid_t gid);
 \end{verbatim}
 
-
 Una vez que tanto las listas de grupos como de usuarios han sido obtenidos, 
 se procede con el modelamiento de la información para la presentación al usuario.
 
@@ -485,6 +486,188 @@ GObject
 
 \end{verbatim}
 
-\end{document}
+Como la información a ser presentada no requiere más que una representación lineal,
+se hará uso de ese Modelo. Los cuales serán creados mediante los métodos:
+GtkTreeModel *create\_groups\_model y GtkTreeModel *create\_users\_model, para los 
+modelos GtkListStore para grupos y usuarios; a los cuales se hace la carga de la información de las GList* users y groups:
+\begin{verbatim}
+static GtkTreeModel *create_users_model () {
+  GtkListStore *model;
+  GtkTreeIter iter;
 
+  model = gtk_list_store_new (UN_COLS,
+      G_TYPE_UINT,
+      G_TYPE_STRING,
+      G_TYPE_STRING, 
+      G_TYPE_STRING,
+      G_TYPE_STRING,
+      G_TYPE_BOOLEAN
+      );
+
+  /* Se solicita la carga de los usuarios */
+  _populate_users();
+  GList *o_users = users;
+  while(users != NULL) {
+    UsersItem *usr = users->data;
+
+    /* Se inserta en el modelo de datos, la información con las columnas
+     * definidas anteriormente
+     */
+    gtk_list_store_append(model, &iter);
+    gtk_list_store_set(model, &iter, 
+        UID_COL, usr->uid,
+        UNAME_COL, usr->name,
+        UFULLNAME_COL,usr->fullname,
+        USHELL_COL, usr->shell,
+        UHOMEPATH_COL, usr->home,
+        UISNEW_COL, usr->is_new,
+        -1);
+    /*tree_item_to_string(users->data);*/
+    users = g_list_next(users);
+  }
+  /* Se preserva el origen de la lista de usuarios */
+  users = o_users;
+  return GTK_TREE_MODEL (model);
+}
+\end{verbatim}
+
+El código anterior es similar para el llenado de la información para los grupos.
+Con la diferencia que son menos columnas las que son solicitadas.
+
+La ventaja principal que brinda GtkListStore es que tiene funciones ya implementadas
+para el ordenamiento y búsqueda de la información, útil para que el usuario pueda 
+hacer búsquedas rápidas en las listas que se le presentarán.
+
+\subsection{Presentación de la información al usuario}
+Se ha construido la estructura básica visual del programa utilizando la 
+herramienta \emph{glade} en su versión 3. 
+
+El programa, en su ventana principal, fue dividido en dos paneles(GtkBox), en el cual 
+se incluyeron dos ventanas con capacidad de desplazamiento y una columna de botones(GtkButton).
+
+En las ventanas con capacidad de desplazamiento, se adjunto el visor de información
+para objetos que implementan la interfáz GtkTreeModel, como lo hace el objeto 
+definido anteriormente para las listas(GtkListStore). Se incluyeron GtkTreeView para los usuarios y
+para los grupos.
+
+El cargado del diseño realizado utilizado \emph{glade} fue realizada con la biblioteca
+GtkBuilder incluida en la versión 3 de Gtk+. Versiones anteriores requieren la utilización
+de la biblioteca \emph{libglade}. Básicamente, las siguientes funciones permiten el 
+cargado de la información y convertirlo en objetos Gtk para su uso:
+
+\begin{verbatim}
+  GtkBuilder *builder;
+  /*Carga el diseño realizado utilizando glade*/
+  builder = gtk_builder_new_from_file("um.glade");
+  /*Recupera la referencia del objeto que fue construido previamente*/
+  window = GTK_WIDGET(gtk_builder_get_object(builder, "main_window"));
+  /*Añade las funcionalidades a los eventos */
+  g_signal_connect (window, "delete-event", G_CALLBACK (on_delete_event), NULL);
+  g_signal_connect (window, "destroy", G_CALLBACK (gtk_main_quit), NULL);
+  /*Recupera la referencia al objeto que controla los GtkTreeView para usuarios y grupos*/
+  users_tv = GTK_WIDGET(gtk_builder_get_object(builder, "treeview_users"));
+  groups_tv = GTK_WIDGET(gtk_builder_get_object(builder, "treeview_groups"));
+
+\end{verbatim}
+
+Una vez cargado, se asignaron las funciones de respuesta a los diferentes eventos
+que pudieran suceder en la interfáz, como ser: cerrar la ventana,
+presionar click en el botón de añadir usuario, eliminar usuario, etc.
+
+Debido a que el diseño creado con Glade se encuentra vacío, se realizó la carga
+de la información y inclusión en los GtkTreeView respectivos. Inicialmente, 
+se añadieron los modelos que utilizarán(gtk\_tree\_view\_set\_model) y,
+posteriormente, se añaden las columnas que serán visualizadas; Las funciones: add\_columns y add\_groups\_columns se encargan de esa tarea.
+
+Se aclara que los modelos que fueron añadidos, han sido cargados con la información 
+previamente.
+
+\begin{verbatim}
+  gtk_tree_view_set_model (GTK_TREE_VIEW(users_tv), umodel);
+  gtk_tree_view_set_model (GTK_TREE_VIEW(groups_tv), gmodel);
+
+  add_columns(GTK_TREE_VIEW(users_tv), umodel, smodel);
+  add_groups_columns(GTK_TREE_VIEW(groups_tv), gmodel);
+
+\end{verbatim}
+
+El uso de GtkTreeView ha permitido un rápido, fácil y sencillo manejo de la modificación
+de la información, tal es el caso de la capacidad de edición de las diferentes celdas
+y el control sobre éstas.
+
+\subsection{Ejecución de las acciones solicitadas}
+Las acciones desarrolladas para permitir el funcionamiento del programa, fueron
+realizadas utilizando la función: g\_spawn\_sync definida en la biblioteca Glib.
+\begin{verbatim}
+gboolean
+g_spawn_sync (const gchar *working_directory,
+              gchar **argv,
+              gchar **envp,
+              GSpawnFlags flags,
+              GSpawnChildSetupFunc child_setup,
+              gpointer user_data,
+              gchar **standard_output,
+              gchar **standard_error,
+              gint *exit_status,
+              GError **error);
+\end{verbatim}
+La función ejecuta un proceso hijo de forma síncrona, de manera que espera su retorno 
+para continuar con la ejecución.
+
+Los comandos a ser ejecutados para brindar la funcionalidad al programa fueron definidos
+en la sección \ref{sse:usersadmin}(Ver página: \pageref{sse:usersadmin}).
+
+Se utilizó un pequeño trucho para ir añadiendo los parámetros para las diferentes opciones.
+El cual es adjuntar un símbolo ``|'' entre opciones, esto debido a los problemas que 
+generaron la utilización de comillas entre los parámetros. Después, se realizó una
+separación de éstos con la función **g\_strsplit , que devuelve un arreglo de cadenas
+de caracteres. Y los mismos son pasados como parámetros a la función que ejecutará
+el comando.
+
+\subsection{Compilación y ejecución del programa}
+El programa escrito en lenguage C fue compilado con el compilador por defecto en sistemas
+GNU Linux, el \emph{gcc}, haciendo uso de la herramienta \emph{pkg-config} para 
+obtener rápidamente la dirección de las bibliotecas de cabeceras y de enlace para
+las bibliotecas a ser utilizadas (Gtk+ y gio).
+\begin{verbatim}
+gcc -o um um.c \pikg-config --cflags --libs gtk+-3.0 gio-2.0`
+\end{verbatim}
+
+\section{Resultados}
+Se obtuvieron los siguientes resultados:
+
+\begin{figure}[htb]
+  \centering
+\includegraphics[scale=0.5]{pics/um000.png}
+  \caption{Vista general de la interfáz del programa}
+  \label{fig:main-window}
+\end{figure}
+
+
+\begin{figure}[htb]
+  \centering
+  \includegraphics[scale=0.5]{pics/um001.png}
+  \caption{Vista de todas las columnas del área de manejo de usuarios}
+\end{figure}
+
+\begin{figure}[htb]
+  \centering
+\includegraphics[scale=0.5]{pics/um002.png}
+  \caption{Vista de todas las columnas del área de manejo de grupos}
+\end{figure}
+
+
+\section{Conclusión}
+Se ha desarrollado una aplicación gráfica para la administración de usuarios y grupos
+en sistemas Unix/Linux con las herramientas de desarollo de Glibc, Gtk+ y GLib principalmente y libgio 
+como auxiliar. 
+
+Se diseñó la interfáz utilizando herramienta de diseño de interfaces \emph{glade}.
+
+El programa desarrollado permite crear, modificar, eliminar usuarios y grupos, y
+asignar grupos de trabajo  a los diferentes usuarios.
+
+Debido a los detalles que obligan a escribir y a la dependencia del sistema operativo,
+se desestimó escribir el programa en sintaxis de C estándar.
+\end{document}
 
