@@ -272,7 +272,7 @@ static GtkTreeModel *create_groups_model () {
 }
 
 static GtkTreeModel *create_users_model () {
-  GtkListStore *model;
+  GtkListStore *model;    // Modelo de listas simples 
   GtkTreeIter iter;
 
   model = gtk_list_store_new (UN_COLS,
@@ -288,6 +288,9 @@ static GtkTreeModel *create_users_model () {
   while(users != NULL) {
     UsersItem *usr = users->data;
 
+    /* Se inserta en el modelo de datos, la información con las columnas
+     * definidas anteriormente
+     */
     gtk_list_store_append(model, &iter);
     gtk_list_store_set(model, &iter, 
         UID_COL, usr->uid,
@@ -300,6 +303,7 @@ static GtkTreeModel *create_users_model () {
     /*tree_item_to_string(users->data);*/
     users = g_list_next(users);
   }
+  /* Se preserva el origen de la lista de usuarios */
   users = o_users;
   return GTK_TREE_MODEL (model);
 
@@ -828,14 +832,17 @@ int main (int argc, char *argv[])
 
   gtk_init (&argc, &argv);
 
+  /*Carga el diseño realizado utilizando glade*/
   builder = gtk_builder_new_from_file("um.glade");
+  /*Recupera la referencia del objeto que fue construido previamente*/
   window = GTK_WIDGET(gtk_builder_get_object(builder, "main_window"));
-
+  /*Añade las funcionalidades a los eventos */
   g_signal_connect (window, "delete-event", G_CALLBACK (on_delete_event), NULL);
   g_signal_connect (window, "destroy", G_CALLBACK (gtk_main_quit), NULL);
-
+  /*Recupera la referencia al objeto que controla los GtkTreeView para usuarios y grupos*/
   users_tv = GTK_WIDGET(gtk_builder_get_object(builder, "treeview_users"));
   groups_tv = GTK_WIDGET(gtk_builder_get_object(builder, "treeview_groups"));
+
   users_add_btn = GTK_WIDGET(gtk_builder_get_object(builder, "button_add_user"));
   users_confirm_btn = GTK_WIDGET(gtk_builder_get_object(builder, "button_confirm_user"));
   users_delete_btn = GTK_WIDGET(gtk_builder_get_object(builder, "button_delete_user"));
