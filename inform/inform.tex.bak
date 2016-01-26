@@ -1,5 +1,5 @@
 \documentclass[letterpaper,10pt]{article}
-  \usepackage[margin=2.25cm]{geometry}
+\usepackage[margin=2.5cm]{geometry}
 \usepackage[utf8x]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage[spanish]{babel}
@@ -7,7 +7,7 @@
 \usepackage{graphicx}
 
 \newcommand{\swname}{Miau}
-\newcommand{\swsub}{Administrador gráfico de usuarios Linux}
+\newcommand{\swsub}{Manejadador gráfico de usuarios Linux}
 
 \title{\swname \\ \swsub}
 \date{\today}
@@ -22,7 +22,7 @@ El sistema operativo Linux tiene como control de acceso a los grupos y usuarios;
 y dispositivos. Provee además métodos de control de accesos relativamente simples.
 
 Al restringir  y/o permitir el acceso a las diferentes características 
-de la computadora, es imperante se pueda realizar la \emph{Administración de usuarios}.
+de la computadora, es imperante se pueda realizar la \emph{ADministración de usuarios}.
 De manera que se pueda determinar el comportamiento sobre la característica
 del sistema que es ofrecida para permitir un funcionamiento seguro del sistema.
 
@@ -34,7 +34,7 @@ Los sistemas Unix tienen desarrollado una abstracción para cumplir con el parad
 De manera que, cada archivo en Unix tiene como poseedor a un usuario y un grupo, y brinda 
 tres tipos de acceso a éstos: 1)Lectura, 2)Escritura y 3)Ejecución.
 
-\swname --\swsub-- es una aplicación gráfica, programada en Lenguaje C, para la administración de los usuarios y grupos
+\swname --\swsub-- es una aplicación gráfica, programada en Lenguage C, para la administración de los usuarios y grupos
 en Linux utilizando las herramientas GLib para diferentes funciones de segundo plano y Gtk para
 la presentación al usuario.
 
@@ -42,11 +42,11 @@ la presentación al usuario.
 \subsection{Linux, usuarios y su administración }
 La arquitectura del sistema operativo Linux puede ser visto desde dos niveles de ejecución, el nivel de usuario/aplicación
 y el nivel del Kernel.
-Existe una biblioteca (glibc) que hace de interfaz entre el nivel de usuario y el de kernel, y un mecanismo de transición 
+Existe una biblioteca (glibc) que hace de interface entre el nivel de usuario y el de kernel, y un mecanismo de transición 
 entre ambas.
 El usuario tiene acceso al espacio del Kernel sólo a través de una llamada al sistema(system call).
 
-Un forma de acceso a un sistema Linux es a través de una cuenta de usuario. Una sola persona puede tener más de una cuenta,
+Un forma de acceso a un sistema linux es a través de una cuenta de usuario. Una sóla persona puede tener más de una cuenta,
 siempre y cuando que utilicen una nombre diferente para cada uno. Hay algunos nombres de usuario que son reservados y
 no pueden ser asignadas a un usuario convencional, tal es el caso de ``root''.
 
@@ -84,7 +84,7 @@ columna el grupo al que pertenece. Por ejemplo, el archivo \emph{umountfs} tiene
   \item Grupo: Lectura y ejecución (rx). Todos los usuarios pertenecientes al grupo ``kass'' pueden realizar cualquier acción sobre este archivo.
   \item Otros: Lectura y ejecución (rx). Cualquier otro usuario del sistema puede tener acceso al archivo pero no realizar ninguna modificación a este.
 \end{itemize}
-El archivo ``umountfs'' pertenece al usuario ``kass'' y al grupo principal de éste.
+El archivo ``umountfs'' pertene al usuario ``kass'' y al grupo principal de éste.
 
 \subsection{Tipos de usuario}
 En Linux existen básicamente tres tipos de usuario a ser:
@@ -154,7 +154,7 @@ en el anterior entorno de trabajo(/home/tso) y cambia el nombre de inicio ``tso'
 Realizar una modificación al identificador del usuario no implica un cambio de los archivos creados por el usuario 
 y que tengan el identificador previo. Es necesario hacer una búsqueda y actualización de los archivos anteriores.
 
-Mediante este comando además es posible modificar los grupos a los cuales va a pertenecer el usuario; se puede
+Mediante este comando además es posibe modificar los grupos a los cuales va a pertenecer el usuario; se puede
 incluir una lista nueva o añadir otro grupo más a los ya pertenecientes.
 \begin{verbatim}
 $ usermod -a -G grupito,grupito2,grupito3 tso2
@@ -182,7 +182,7 @@ En tal situación se puede utilizar el comando \emph{chpasswd} de la siguiente m
 $ echo ``tso2:elpoderdelmundo'' | chpasswd
 \end{verbatim}
 Se manda información al comando chpasswd a través de una tubería. La primera palabra es el nombre de usuario,
-seguido por el símbolo de dos puntos(:), posteriormente la contraseña sin necesidad de codificar.
+seguido por el śimbolo de dos puntos(:), posteriormente la contraseña sin necesidad de codificar.
 Por defecto, el comando chpasswd hará el cifrado de la contraseña con el formato adecuado, 
 y almacenará esta en el archivo /etc/shadow para un siguiente acceso por parte del usuario.
 
@@ -208,7 +208,7 @@ Para modificar el identificador o el nombre del grupo se utiliza el comando ``gr
 \begin{verbatim}
 groupmod -n grupito2 grupito
 \end{verbatim}
-Le modifica el nombre del grupo ``grupito'' a ``grupito2'' y se preserva el identificador actual.
+Le modifica el nombre del grupo ``grupito'' a ``grupito2'' y se preserva el identificador acutal.
 
 Finalmente, para eliminar un grupo es el comando ``userdel''; el cual sólo elimina el grupo de la lista
 de grupos, no así los archivos que tengan este nombre de grupo.
@@ -223,9 +223,9 @@ para entornos Microsoft Windows.
 \subsection{Lenguaje C}
 El lenguaje de Programación C fue desarrollado en los años 70 y es orientado a la implementación de Sistemas 
 Operativos debido a su disponibilidad típica de estructuras de alto nivel como también de bajo nivel.
-Es un Lenguaje muy popular para la programación de sistemas, como también para la creación de aplicaciones de usuario.
+Es un lenguage muy popular para la programación de sistemas, como también para la creación de aplicaciones de usuario.
 
-Los sistemas Unix están implementados en éste lenguaje de programación.
+Los sistemas Unix están implementados en éste lenguage de programación.
 
 No tiene un sistema de tipificación fuerte, lo que permite una flexibilidad bajo ciertos parámetros.
 Pero, no tiene tipos de datos dinámicos que genera una reducción en la velocidad de desarrollo.
@@ -233,7 +233,7 @@ Pero, no tiene tipos de datos dinámicos que genera una reducción en la velocid
 Un ejemplo de reducción de la velocidad de desarrollo es la de reservar y liberar memoria que debe realizarse
 manualmente.
 
-El proceso de compilación del lenguaje C es el siguiente: 
+El proceso de compilación del lenguage C es el siguiente: 
 \begin{enumerate}
   \item Preprocesado consistente en modificar el código fuente según las directrices determinadas para agilizar
     el proceso de compilación. Tal es el caso de reemplazar códigos definidos para diferentes constantes o
@@ -258,7 +258,7 @@ El compilador \emph{gcc} utiliza por defecto esta biblioteca como la básica par
 
 \subsubsection{Glib}
 Es una biblioteca de propósito general inicialmente desarrollado para el entorno Gnome, y Gtk.
-Implementa muchas funciones, tipos y estructuras no gráficas que permiten un desarrollo de programación
+Implmenta muchas funciones, tipos y estructuras no gráficas que permiten un desarrollo de programación
 más amigables sobre glibc.
 Presenta una abstracción independiente de cualquier sistema operativo y, por tanto, permite adaptarse
 a diferentes situaciones. Consta de las siguientes características:
@@ -279,10 +279,10 @@ GObject es la biblioteca fundamental para la construcción del conjunto de siste
 Gtk y todo el entorno Gnome. 
 
 Implementa todas las características que determina el paradigma de Programación Orientada a Objetos
-en un lenguaje de programación estructurada como es el lenguaje C.
+en un lenguage de programación estructurada como es el lenguaje C.
 
 \subsubsection{GIO}
-Es una biblioteca que provee una interfaz de programación para sistemas de archivos virtuales, como 
+Es una biblioteca que provee una interfáz de programación para sistemas de archivos virtuales, como 
 el acceso a archivos remotos, locales mediante diferentes protocolos de comunicación.
 También tiene un soporte de transmisión asíncrona de archivos y utiliza el sistema de mensajes
 DBus para la comunicación entre procesos.
@@ -290,7 +290,7 @@ DBus para la comunicación entre procesos.
 Gio también es utilizado en la plataforma Gnome para las funciones de acceso a ficheros 
 a través de diferentes protocolos.
 
-\subsection{Bibliotecas para interfaz gráfica}
+\subsection{Bibliotecas para interfáz gráfica}
 Al ser un sistema Linux la plataforma de trabajo, se hará uso de las funciones que provee
 el sistema gráfico X Window System (X11). Pero, no se utilizará ninguna función primitiva 
 explícitamente; sino que se aprovechará una biblioteca específica para la creación de interfaces 
@@ -298,10 +298,10 @@ de usuario que brinda diferentes elementos para interactuar con el usuario, el G
 
 \subsubsection{Gtk+}
 Es un biblioteca que contiene funciones y objetos para crear interfaces gráficas con el usuario,
-a través de botones, paneles, menús, pestañas, etc.
+a través de botones, paneles, menúes, pestañas, etc.
 
 Gtk utiliza un sistema de objetos con base en GObject y debido a la portabilidad y conectividad 
-de GObject es fácilmente portado como bibliotecas para otros lenguajes de programación.
+de GObject es fácilmente portado como bibliotecas para otros lenguajes de progrmaación.
 
 Gtk+ es todo un grupo de bibliotecas que permiten un acceso amigable, sencillo y accesible 
 a las funciones gráficas que se presentan al usuario final.
@@ -325,7 +325,7 @@ Las bibliotecas a ser utilizadas fueron descritas previamente en la sección Mar
 
 \subsection{Estructuración del programa}
 El programa fue escrito de manera que se evite en lo posible de ocultar las variables innecesarias
-en el ámbito global. Es decir, las únicas variables globales que se definieron son: lista de usuarios,
+en el ámbito globar. Es decir, las únicas variables globales que se definieron son: lista de usuarios,
 lista de grupos y lista de shells.
 El resto de variables son constantes o tipos de datos de estructura, como ser identificación de columnas en las GtkTreeView
 de usuarios y grupos, definición de UsersItem/GruopsItem.
@@ -436,7 +436,7 @@ void _populate_users() {
 \end{verbatim}
 La función setpwent() realiza la apertura y preparación del archivo \emph{/etc/passwd} 
 para empezar a obtener la información de los usuarios. Después, se hace uso de la 
-función getpwend() para obtener el primer usuario de la lista, seguidamente otra vez 
+función getpwend() para obtener el primer uusario de la lista, seguidamente otra vez 
 la función getpwent() para obtener el siguiente, hasta terminar. Una vez que se concluya
 la obtención de los usuarios del archivo, se llama a la función getpwent() para que 
 cierre archivo y libere los recursos de memoria que haya solicitado.
@@ -461,7 +461,7 @@ static void user_item_to_string (UsersItem *u) {
   g_print ("Id: %i, Name: %s, Home: %s, Shell: %s\n", u->uid, u->name, u->home, u->shell);
 }
 \end{verbatim}
-La función anterior es por motivos netamente de depuración.
+La función anterior es por motivos nétamente de depuración.
 
 Otra funciones son:
 \begin{verbatim}
@@ -546,7 +546,7 @@ El programa, en su ventana principal, fue dividido en dos paneles(GtkBox), en el
 se incluyeron dos ventanas con capacidad de desplazamiento y una columna de botones(GtkButton).
 
 En las ventanas con capacidad de desplazamiento, se adjunto el visor de información
-para objetos que implementan la interfaz GtkTreeModel, como lo hace el objeto 
+para objetos que implementan la interfáz GtkTreeModel, como lo hace el objeto 
 definido anteriormente para las listas(GtkListStore). Se incluyeron GtkTreeView para los usuarios y
 para los grupos.
 
@@ -571,7 +571,7 @@ cargado de la información y convertirlo en objetos Gtk para su uso:
 \end{verbatim}
 
 Una vez cargado, se asignaron las funciones de respuesta a los diferentes eventos
-que pudieran suceder en la interfaz, como ser: cerrar la ventana,
+que pudieran suceder en la interfáz, como ser: cerrar la ventana,
 presionar click en el botón de añadir usuario, eliminar usuario, etc.
 
 Debido a que el diseño creado con Glade se encuentra vacío, se realizó la carga
@@ -617,7 +617,7 @@ para continuar con la ejecución.
 Los comandos a ser ejecutados para brindar la funcionalidad al programa fueron definidos
 en la sección \ref{sse:usersadmin}(Ver página: \pageref{sse:usersadmin}).
 
-Se utilizó un pequeño truco para ir añadiendo los parámetros para las diferentes opciones.
+Se utilizó un pequeño trucho para ir añadiendo los parámetros para las diferentes opciones.
 El cual es adjuntar un símbolo ``|'' entre opciones, esto debido a los problemas que 
 generaron la utilización de comillas entre los parámetros. Después, se realizó una
 separación de éstos con la función **g\_strsplit , que devuelve un arreglo de cadenas
@@ -625,7 +625,7 @@ de caracteres. Y los mismos son pasados como parámetros a la función que ejecu
 el comando.
 
 \subsection{Compilación y ejecución del programa}
-El programa escrito en lenguaje C fue compilado con el compilador por defecto en sistemas
+El programa escrito en lenguage C fue compilado con el compilador por defecto en sistemas
 GNU Linux, el \emph{gcc}, haciendo uso de la herramienta \emph{pkg-config} para 
 obtener rápidamente la dirección de las bibliotecas de cabeceras y de enlace para
 las bibliotecas a ser utilizadas (Gtk+ y gio).
@@ -639,7 +639,7 @@ Se obtuvieron los siguientes resultados:
 \begin{figure}[htb]
   \centering
 \includegraphics[scale=0.5]{pics/um000.png}
-  \caption{Vista general de la interfaz del programa}
+  \caption{Vista general de la interfáz del programa}
   \label{fig:main-window}
 \end{figure}
 
@@ -659,10 +659,10 @@ Se obtuvieron los siguientes resultados:
 
 \section{Conclusión}
 Se ha desarrollado una aplicación gráfica para la administración de usuarios y grupos
-en sistemas Unix/Linux con las herramientas de desarrollo de Glibc, Gtk+ y GLib principalmente y libgio 
+en sistemas Unix/Linux con las herramientas de desarollo de Glibc, Gtk+ y GLib principalmente y libgio 
 como auxiliar. 
 
-Se diseñó la interfaz utilizando herramienta de diseño de interfaces \emph{glade}.
+Se diseñó la interfáz utilizando herramienta de diseño de interfaces \emph{glade}.
 
 El programa desarrollado permite crear, modificar, eliminar usuarios y grupos, y
 asignar grupos de trabajo  a los diferentes usuarios.
